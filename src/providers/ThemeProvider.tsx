@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 export type ThemeColor = "lime" | "cyan" | "orange" | "blue";
 
@@ -31,38 +31,63 @@ export const themeOptions = {
   },
 };
 
+export const THEME_STORAGE_KEY = "swotlabs-theme";
+
+export type ThemeColors = (typeof themeOptions)[ThemeColor];
+
 type ThemeContextType = {
   theme: ThemeColor;
   setTheme: (theme: ThemeColor) => void;
-  currentColors: typeof themeOptions[ThemeColor];
+  currentColors: ThemeColors;
 };
+
+/**
+ * Inline script run in <head> before paint. Reads the saved accent and sets
+ * the CSS custom properties so there's no first-frame color flash. Kept as a
+ * plain string (no closures) because it's injected via dangerouslySetInnerHTML.
+ */
+export const THEME_INIT_SCRIPT = `(function(){try{var o=${JSON.stringify(
+  themeOptions
+)};var t=localStorage.getItem(${JSON.stringify(
+  THEME_STORAGE_KEY
+)});if(!t||!o[t])t="lime";var c=o[t],r=document.documentElement.style;r.setProperty("--color-accent",c.accent);r.setProperty("--color-accent-light",c.accentLight);r.setProperty("--color-accent-soft",c.accentSoft);r.setProperty("--color-accent-border",c.accentBorder);}catch(e){}})();`;
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeColor>("lime");
+  // Always start from the default so the first client render matches the SSR
+  // markup (no hydration mismatch). The inline THEME_INIT_SCRIPT already set
+  // the CSS variables from localStorage before paint, so there's no color
+  // flash; we sync React state to the saved value right after mount below.
+  const [theme, setThemeState] = useState<ThemeColor>("lime");
+  const hydrated = useRef(false);
 
+  // Load the saved preference once, after hydration.
   useEffect(() => {
-    // Load preference from localStorage if available
-    const saved = localStorage.getItem("swotlabs-theme") as ThemeColor;
-    if (saved && themeOptions[saved]) {
-      setTheme(saved);
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeColor | null;
+    if (saved && themeOptions[saved] && saved !== "lime") {
+      setThemeState(saved);
     }
+    hydrated.current = true;
   }, []);
 
+  // Apply CSS variables + persist whenever the theme changes — but skip the
+  // initial render, since the inline script already applied the saved colors.
   useEffect(() => {
+    if (!hydrated.current) return;
+
     const root = document.documentElement;
     const colors = themeOptions[theme];
 
-    // Update CSS variables
     root.style.setProperty("--color-accent", colors.accent);
     root.style.setProperty("--color-accent-light", colors.accentLight);
     root.style.setProperty("--color-accent-soft", colors.accentSoft);
     root.style.setProperty("--color-accent-border", colors.accentBorder);
 
-    // Save to localStorage
-    localStorage.setItem("swotlabs-theme", theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  const setTheme = setThemeState;
 
   const currentColors = themeOptions[theme];
 

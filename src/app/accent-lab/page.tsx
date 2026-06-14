@@ -93,6 +93,8 @@ function contrastRatio(foreground: string, background: string) {
 export const metadata: Metadata = {
   title: "Accent Lab",
   description: "Standalone accent comparison UI for selecting a stronger color direction.",
+  // Internal design scratchpad — keep it out of search indexes.
+  robots: { index: false, follow: false },
 };
 
 export default function AccentLabPage() {

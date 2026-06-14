@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import dynamic from "next/dynamic";
+import { prefersReducedMotion } from "@/lib/useReducedMotion";
+import MagneticButton from "./MagneticButton";
 
 const HeroScene = dynamic(() => import("./HeroScene"), { ssr: false });
 
@@ -14,6 +16,19 @@ export default function Hero() {
   const badgeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const targets = [
+      badgeRef.current,
+      headingRef.current,
+      subRef.current,
+      ctaRef.current,
+    ];
+
+    // Reduced motion: reveal everything immediately, no entrance animation.
+    if (prefersReducedMotion()) {
+      gsap.set(targets, { y: 0, opacity: 1 });
+      return;
+    }
+
     const tl = gsap.timeline({ delay: 0.8 });
 
     tl.fromTo(
@@ -39,6 +54,10 @@ export default function Hero() {
         { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
         "-=0.4"
       );
+
+    return () => {
+      tl.kill();
+    };
   }, []);
 
   return (
@@ -99,20 +118,18 @@ export default function Hero() {
         </p>
 
         <div ref={ctaRef} className="flex flex-col sm:flex-row gap-4 justify-center opacity-0">
-          <a
+          <MagneticButton
             href="#services"
-            className="magnetic-btn px-8 py-4 bg-accent text-white rounded-full text-sm font-medium tracking-wide hover:bg-accent-light transition-all duration-300 hover:shadow-[0_0_40px_var(--color-accent-border)]"
-            data-cursor-hover
+            className="px-8 py-4 bg-accent text-background rounded-full text-sm font-medium tracking-wide hover:bg-accent-light transition-colors duration-300 hover:shadow-[0_0_40px_var(--color-accent-border)]"
           >
             Explore our services
-          </a>
-          <a
+          </MagneticButton>
+          <MagneticButton
             href="#clients"
-            className="magnetic-btn px-8 py-4 border border-border text-foreground rounded-full text-sm font-medium tracking-wide hover:border-accent hover:text-accent transition-all duration-300"
-            data-cursor-hover
+            className="px-8 py-4 border border-border text-foreground rounded-full text-sm font-medium tracking-wide hover:border-accent hover:text-accent transition-colors duration-300"
           >
             View our work
-          </a>
+          </MagneticButton>
         </div>
       </div>
 

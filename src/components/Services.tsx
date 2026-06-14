@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import SectionLabel from "./SectionLabel";
+import { useReveal } from "@/lib/useReveal";
 
 const services = [
   {
@@ -45,74 +42,29 @@ const services = [
 ];
 
 export default function Services() {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Section heading animation
-      gsap.fromTo(
-        ".services-heading",
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".services-heading",
-            start: "top 85%",
-          },
-        }
-      );
-
-      // Service cards stagger
-      gsap.fromTo(
-        ".service-card",
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".service-cards",
-            start: "top 80%",
-          },
-        }
-      );
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const headingRef = useReveal<HTMLHeadingElement>();
+  const listRef = useReveal<HTMLDivElement>({ stagger: 110 });
 
   return (
-    <section
-      ref={sectionRef}
-      id="services"
-      className="section-padding relative"
-    >
-      {/* Section label */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-px bg-accent" />
-        <span className="text-xs text-accent tracking-[0.3em] uppercase font-mono">
-          What we do
-        </span>
-      </div>
+    <section id="services" className="section-padding relative">
+      <SectionLabel>What we do</SectionLabel>
 
-      <h2 className="services-heading text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-20 max-w-4xl opacity-0">
-        AI services that{" "}
-        <span className="text-accent">transform</span> enterprise
+      <h2
+        ref={headingRef}
+        className="reveal text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-20 max-w-4xl"
+      >
+        AI services that <span className="text-accent">transform</span> enterprise
       </h2>
 
-      <div className="service-cards space-y-0">
+      <div ref={listRef} className="space-y-0">
         {services.map((service) => (
           <div
             key={service.number}
-            className="service-card group border-t border-border py-10 md:py-14 opacity-0"
+            data-reveal-child
+            className="reveal service-card group border-t border-border py-10 md:py-14 transition-colors duration-300 hover:bg-surface/20"
           >
             <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-12">
-              <span className="text-accent font-mono text-sm shrink-0">
+              <span className="text-accent font-mono text-sm shrink-0 md:pt-1.5">
                 {service.number}
               </span>
               <div className="flex-1">
@@ -133,7 +85,7 @@ export default function Services() {
                   ))}
                 </div>
               </div>
-              <div className="hidden md:block shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="hidden md:block shrink-0 self-center opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                 <svg
                   width="24"
                   height="24"
@@ -142,6 +94,7 @@ export default function Services() {
                   stroke="currentColor"
                   strokeWidth="2"
                   className="text-accent -rotate-45"
+                  aria-hidden="true"
                 >
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -149,7 +102,6 @@ export default function Services() {
             </div>
           </div>
         ))}
-        {/* Bottom border */}
         <div className="border-t border-border" />
       </div>
     </section>

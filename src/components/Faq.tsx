@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { useState } from "react";
+import SectionLabel from "./SectionLabel";
+import { useReveal } from "@/lib/useReveal";
 
 const faqs = [
   {
@@ -30,80 +28,47 @@ const faqs = [
 ];
 
 export default function Faq() {
-  const sectionRef = useRef<HTMLElement>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ".faq-heading",
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".faq-heading",
-            start: "top 85%",
-          },
-        }
-      );
-
-      gsap.fromTo(
-        ".faq-item-anim",
-        { y: 40, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".faq-list",
-            start: "top 85%",
-          },
-        }
-      );
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const headingRef = useReveal<HTMLDivElement>({ stagger: 120 });
+  const listRef = useReveal<HTMLDivElement>({ stagger: 90 });
 
   const toggleAccordion = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index);
   };
 
   return (
-    <section ref={sectionRef} id="faq" className="section-padding relative">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-px bg-accent" />
-        <span className="text-xs text-accent tracking-[0.3em] uppercase font-mono">
-          FAQ
-        </span>
-      </div>
+    <section id="faq" className="section-padding relative">
+      <SectionLabel>FAQ</SectionLabel>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-        <div className="lg:col-span-5">
-          <h2 className="faq-heading text-4xl md:text-6xl font-bold tracking-tight mb-6 opacity-0 leading-tight">
+        <div ref={headingRef} className="lg:col-span-5">
+          <h2
+            data-reveal-child
+            className="reveal text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight"
+          >
             Frequently <br className="hidden md:block" />
             asked <span className="text-accent">questions</span>
           </h2>
-          <p className="text-muted text-lg leading-relaxed max-w-sm">
-            Everything you need to know about our capabilities, process, safety compliance, and vision.
+          <p data-reveal-child className="reveal text-muted text-lg leading-relaxed max-w-sm">
+            Everything you need to know about our capabilities, process, safety
+            compliance, and vision.
           </p>
         </div>
 
         <div className="lg:col-span-7">
-          <div className="faq-list divide-y divide-border">
+          <div ref={listRef} className="divide-y divide-border">
             {faqs.map((faq, index) => {
               const isOpen = activeIndex === index;
+              const panelId = `faq-panel-${index}`;
+              const buttonId = `faq-button-${index}`;
               return (
-                <div key={index} className="faq-item-anim py-6 opacity-0">
+                <div key={index} data-reveal-child className="reveal py-6">
                   <button
+                    id={buttonId}
                     onClick={() => toggleAccordion(index)}
                     className="w-full flex items-center justify-between text-left group cursor-pointer"
                     aria-expanded={isOpen}
+                    aria-controls={panelId}
                     data-cursor-hover
                   >
                     <span className="text-lg md:text-xl font-medium group-hover:text-accent transition-colors duration-300">
@@ -111,8 +76,9 @@ export default function Faq() {
                     </span>
                     <span
                       className={`w-6 h-6 border border-border rounded-full flex items-center justify-center shrink-0 ml-4 group-hover:border-accent transition-all duration-300 ${
-                        isOpen ? "bg-accent border-accent text-white rotate-45" : "text-muted"
+                        isOpen ? "bg-accent border-accent text-background rotate-45" : "text-muted"
                       }`}
+                      aria-hidden="true"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <line x1="12" y1="5" x2="12" y2="19" />
@@ -122,6 +88,9 @@ export default function Faq() {
                   </button>
 
                   <div
+                    id={panelId}
+                    role="region"
+                    aria-labelledby={buttonId}
                     className={`grid transition-all duration-300 ease-in-out ${
                       isOpen ? "grid-rows-[1fr] opacity-100 mt-4" : "grid-rows-[0fr] opacity-0"
                     }`}
